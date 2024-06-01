@@ -6,6 +6,7 @@ from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from .config import DevelopmentConfig, TestingConfig, ProductionConfig, Config
 import os
+from auth.utils.logger import log_warning
 
 
 db = SQLAlchemy()
@@ -26,8 +27,17 @@ def create_app():
     app.config.from_object(config_map.get(env, Config))
 
     # Initialize CORS
-    # CORS(app)
-    CORS(app, origins=['http://localhost:5173', 'http://localhost:5175'], supports_credentials=True)
+    # Retrieve allowed origins from environment variable
+    allowed_origins = os.getenv('ALLOWED_ORIGINS')
+
+    if allowed_origins is None:
+        log_warning("createapp()", "ALLOWED_ORIGINS environment variable not set. Allowing all origins.")
+        allowed_origins = '*'
+    else:
+        allowed_origins = allowed_origins.split(',')
+
+    # Configure CORS with the allowed origins
+    CORS(app, origins=allowed_origins, supports_credentials=True)
 
     db.init_app(app)
     migrate.init_app(app, db)
