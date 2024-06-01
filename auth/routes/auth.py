@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.services.auth_service import AuthService
-from app.utils.logger import log_route
+from auth.services.auth_service import AuthService
+from auth.utils.logger import log_route
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -9,7 +9,7 @@ auth_bp = Blueprint('auth', __name__)
 @auth_bp.route('/test', methods=['GET'])
 @log_route
 def test():
-    return jsonify({'message': 'Test endpoint'}), 200
+    return {'message': 'Test endpoint'}, 200
 
 
 # Endpoint to register a user

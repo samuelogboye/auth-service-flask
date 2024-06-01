@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify
 from pydantic import ValidationError
-from app.utils.logger import log_route
+from auth.utils.logger import log_route
 
 error = Blueprint("error", __name__)
 

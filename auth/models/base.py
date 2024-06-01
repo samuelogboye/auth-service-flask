@@ -2,7 +2,7 @@
 """
 Base template for the Event driven application
 """
-from app import db
+from auth import db
 from uuid import uuid4
 from datetime import datetime
 

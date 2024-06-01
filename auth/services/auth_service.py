@@ -1,10 +1,10 @@
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token, create_refresh_token
 from datetime import timedelta
-from app import db
-from app.models.models import User
-from app.utils.validation import validate_email, validate_password, validate_username
-from app.utils.logger import log_route
+from auth import db
+from auth.models.models import User
+from auth.utils.validation import validate_email, validate_password, validate_username
+from auth.utils.logger import log_route
 
 
 class AuthService:

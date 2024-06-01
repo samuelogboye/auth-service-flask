@@ -1,5 +1,5 @@
-from app import db, bcrypt
-from app.models.base import BaseModel
+from auth import db, bcrypt
+from auth.models.base import BaseModel
 
 class User(BaseModel):
     __tablename__ = 'users'
