@@ -1,13 +1,16 @@
+""" Manage script for Flask application """
+import os
 from flask_migrate import Migrate
 from auth import create_app, db
 from auth.models.models import User
-import os
 
+# Initialize Flask app
 app = create_app()
 migrate = Migrate(app, db)
 
 @app.shell_context_processor
 def make_shell_context():
+    ''' Shell context for Flask CLI '''
     return {'app': app, 'db': db, 'User': User}
 
 # TO Run Migration
@@ -19,7 +22,7 @@ def make_shell_context():
 #     # Apply the migration to the database
 #     os.system('flask db upgrade')
 #     print("Database created successfully!")
-    
+
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.getenv('PORT', 5000)))
+    app.run(host='0.0.0.0', port=int(os.getenv('PORT', '5000')))
