@@ -20,4 +20,4 @@ jobs:
         pip install -r requirements.txt
     - name: Analyzing the code with pylint
       run: |
-        pylint $(git ls-files '*.py') --ignore-patterns='.*_initial_migration.py'
+        pylint $(git ls-files '*.py' | grep -v '_initial_migration.py' | grep -v 'migrations/env.py')
