@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Run pylint on all Python files
+pylint **/*.py
+
+# Check pylint's exit status
+if [ $? -ne 0 ]; then
+    echo "Pylint check failed. Push aborted."
+    exit 1
+fi
+
+# If pylint check passed, allow the push to proceed
+exit 0

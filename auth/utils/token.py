@@ -1,15 +1,10 @@
-from flask_jwt_extended import decode_token
+'''To work with jwt'''
 from datetime import datetime, timezone
-
-def decode_jwt(token):
-    try:
-        decoded_token = decode_token(token)
-        return decoded_token
-    except Exception as e:
-        return None
+from flask_jwt_extended import decode_token
 
 def is_token_expired(token):
-    decoded_token = decode_jwt(token)
+    '''Check if token is expired'''
+    decoded_token = decode_token(token)
     if not decoded_token:
         return True
     exp_timestamp = decoded_token.get('exp')

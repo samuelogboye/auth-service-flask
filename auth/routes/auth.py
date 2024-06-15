@@ -1,4 +1,5 @@
-from flask import Blueprint, request, jsonify
+'''Contains the route and its business logic call to authservice'''
+from flask import Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from auth.services.auth_service import AuthService
 from auth.utils.logger import log_route
@@ -9,6 +10,7 @@ auth_bp = Blueprint('auth', __name__)
 @auth_bp.route('/test', methods=['GET'])
 @log_route
 def test():
+    '''A test route'''
     return {'message': 'Test endpoint'}, 200
 
 
@@ -16,6 +18,7 @@ def test():
 @auth_bp.route('/register', methods=['POST'])
 @log_route
 def register():
+    '''Endpoint to register a user'''
     data = request.get_json()
 
     if not data or not data.get('username') or not data.get('email') or not data.get('password'):
@@ -31,6 +34,7 @@ def register():
 @auth_bp.route('/login', methods=['POST'])
 @log_route
 def login():
+    '''Endpoint to login a user'''
     data = request.get_json()
 
     if not data or not data.get('email') or not data.get('password'):
@@ -46,6 +50,7 @@ def login():
 @jwt_required()
 @log_route
 def reset_password():
+    '''Endpoint to reset password'''
     user_id = get_jwt_identity()
     data = request.get_json()
 
@@ -62,6 +67,7 @@ def reset_password():
 @jwt_required()
 @log_route
 def change_password():
+    '''Endpoint to change password'''
     user_id = get_jwt_identity()
     data = request.get_json()
 
@@ -79,7 +85,7 @@ def change_password():
 @jwt_required(refresh=True)
 @log_route
 def refresh():
+    '''Endpoint to refresh access token'''
     current_user = get_jwt_identity()
     response, status = AuthService.refresh_token(current_user)
     return response, status
-    

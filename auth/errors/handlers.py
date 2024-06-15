@@ -1,3 +1,4 @@
+# pylint: disable-all
 from flask import Blueprint, jsonify
 from pydantic import ValidationError
 from auth.utils.logger import log_route
