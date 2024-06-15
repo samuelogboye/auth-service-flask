@@ -1,11 +1,8 @@
-from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token, create_refresh_token
 from datetime import timedelta
 from auth import db
 from auth.models.models import User
 from auth.utils.validation import validate_email, validate_password, validate_username
-from auth.utils.logger import log_route
-
 
 class AuthService:
     @staticmethod
@@ -26,8 +23,9 @@ class AuthService:
             # log_error('auth_service/register_user', f'{username} Username can only contain alphanumeric characters and underscores')
             return {'message': 'Username can only contain alphanumeric characters and underscores'}, 400
 
-        hashed_password = generate_password_hash(password)
-        new_user = User(username=username, email=email, password_hash=hashed_password)
+        # hashed_password = generate_password_hash(password)
+        new_user = User(username=username, email=email)
+        new_user.set_password(password)
 
         new_user.insert()
         return {'message': 'User registered successfully'}, 201
@@ -36,7 +34,7 @@ class AuthService:
     def authenticate_user(email, password):
         user = User.query.filter_by(email=email).first()
 
-        if not user or not check_password_hash(user.password_hash, password):
+        if not user or not user.check_password(password):
             return {'message': 'Invalid credentials'}, 401
 
         access_token = create_access_token(identity=user.id, expires_delta=timedelta(minutes=10))
@@ -53,7 +51,7 @@ class AuthService:
         if not validate_password(new_password):
             return {'message': 'Password must be at least 8 characters long with at least one letter and one number'}, 400
         user = User.query.get(user_id)
-        user.password_hash = generate_password_hash(new_password)
+        user.set_password(new_password)
         db.session.commit()
         return {'message': 'Password updated successfully'}, 200
 
@@ -62,9 +60,9 @@ class AuthService:
         if not validate_password(new_password):
             return {'message': 'Password must be at least 8 characters long with at least one letter and one number'}, 400
         user = User.query.get(user_id)
-        if not check_password_hash(user.password_hash, current_password):
+        if not user.check_password(current_password):
             return {'message': 'Invalid current password'}, 401
-        user.password_hash = generate_password_hash(new_password)
+        user.set_password(new_password)
         db.session.commit()
         return {'message': 'Password updated successfully'}, 200
 

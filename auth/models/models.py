@@ -1,5 +1,6 @@
 from auth import db, bcrypt
 from auth.models.base import BaseModel
+from werkzeug.security import generate_password_hash, check_password_hash
 
 class User(BaseModel):
     __tablename__ = 'users'
@@ -9,10 +10,10 @@ class User(BaseModel):
     password_hash = db.Column(db.String(60), nullable=False)
 
     def set_password(self, password):
-        self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
+        self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
-        return bcrypt.check_password_hash(self.password_hash, password)
+        return check_password_hash(self.password_hash, password)
 
     def __repr__(self):
-        return f"User('{self.username}', '{self.email}', '{self.created_at}')"
+        return f"User('{self.username}', '{self.email}', '{self.createdAt}')"

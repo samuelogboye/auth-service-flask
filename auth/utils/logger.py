@@ -2,8 +2,11 @@ import logging
 from logging.handlers import RotatingFileHandler
 import os
 from functools import wraps
-from flask import jsonify
+from flask import jsonify, request
 from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
+from flask_limiter.util import get_remote_address
+
+
 
 
 # Ensure the logs directory exists
@@ -44,10 +47,11 @@ def log_route(func):
 
         response, status = func(*args, **kwargs)
         user_info = f"User ID: {user_id} - " if user_id else ""
+        ip_address = request.remote_addr 
         message = response.get('message') or response.get('msg') or 'No message provided'
         if status >= 200 and status < 300:
-            log_success(func.__name__, f"{user_info}{message}")
+            log_success(func.__name__, f"{ip_address}{user_info}{message}")
         else:
-            log_error(func.__name__, f"{user_info}{message}")
+            log_error(func.__name__, f"{ip_address}{user_info}{message}")
         return jsonify(response), status
     return wrapper
