@@ -67,6 +67,7 @@ def create_app():
         try:
             db.create_all()
         except Exception as e: # pylint: disable=broad-exception-caught
-            print(f"An error occurred: {e}")
+            from auth.utils.logger import log_error # pylint: disable=import-outside-toplevel
+            log_error("create_app()", f"An error occurred: {e}")
 
     return app

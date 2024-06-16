@@ -1,7 +1,7 @@
 '''Contains the route and its business logic call to authservice'''
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from auth.services.auth_service import AuthService
+from ..services.auth_service import AuthService
 from auth.utils.logger import log_route
 
 auth_bp = Blueprint('auth', __name__)
@@ -80,7 +80,6 @@ def change_password():
     response, status = AuthService.change_password(user_id, current_password, new_password)
     return response, status
 
-# Endpoint to refresh access token
 @auth_bp.route('/refresh', methods=['POST'])
 @jwt_required(refresh=True)
 @log_route

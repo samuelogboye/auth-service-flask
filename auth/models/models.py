@@ -1,7 +1,7 @@
 '''Database Model structured'''
 from werkzeug.security import generate_password_hash, check_password_hash
 from auth import db
-from auth.models.base import BaseModel
+from .base import BaseModel
 
 class User(BaseModel):
     '''User Table'''
@@ -14,6 +14,7 @@ class User(BaseModel):
     def set_password(self, password):
         '''Set password for the user'''
         self.password_hash = generate_password_hash(password)
+        db.session.commit()
 
     def check_password(self, password):
         '''Check if the provided password matches the stored password'''

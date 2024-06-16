@@ -5,6 +5,7 @@ import os
 from functools import wraps
 from flask import jsonify, request
 from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
+from flask_jwt_extended.exceptions import NoAuthorizationError, WrongTokenError
 
 # Ensure the logs directory exists
 if not os.path.exists('logs'):
@@ -43,8 +44,15 @@ def log_route(func):
         try:
             verify_jwt_in_request()
             user_id = get_jwt_identity()
+        except NoAuthorizationError:
+            user_id = None
+            logging.debug("No authorization header present")
+        except WrongTokenError:
+            user_id = None
+            logging.debug("Refresh token used where access token expected")
         except (RuntimeError, ValueError):
             user_id = None
+            logging.debug("RuntimeError or ValueError occurred")
 
         response, status = func(*args, **kwargs)
         user_info = f"User ID: {user_id} - " if user_id else ""

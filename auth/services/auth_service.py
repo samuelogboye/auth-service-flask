@@ -1,8 +1,7 @@
 '''AuthService with business logic for the auth routes'''
 from datetime import timedelta
 from flask_jwt_extended import create_access_token, create_refresh_token
-from auth import db
-from auth.models.models import User
+from ..models.models import User
 from auth.utils.validation import validate_email, validate_password, validate_username
 
 PASSWORD_VALIDATION_ERROR = 'Password must be at least 8 char, at least one letter and one number'
@@ -46,7 +45,7 @@ class AuthService:
         if not user or not user.check_password(password):
             return {'message': 'Invalid credentials'}, 401
 
-        access_token = create_access_token(identity=user.id, expires_delta=timedelta(minutes=10))
+        access_token = create_access_token(identity=user.id, expires_delta=timedelta(minutes=10), fresh=True)
         refresh_token = create_refresh_token(identity=user.id, expires_delta=timedelta(minutes=60))
 
         return {
@@ -64,7 +63,6 @@ class AuthService:
                 }, 400
         user = User.query.get(user_id)
         user.set_password(new_password)
-        db.session.commit()
         return {'message': 'Password updated successfully'}, 200
 
     @staticmethod
@@ -78,7 +76,6 @@ class AuthService:
         if not user.check_password(current_password):
             return {'message': 'Invalid current password'}, 401
         user.set_password(new_password)
-        db.session.commit()
         return {'message': 'Password updated successfully'}, 200
 
     @staticmethod
