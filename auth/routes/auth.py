@@ -1,8 +1,8 @@
 '''Contains the route and its business logic call to authservice'''
 from flask import Blueprint, request
-from flask_jwt_extended import jwt_required, get_jwt_identity
-from ..services.auth_service import AuthService
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from auth.utils.logger import log_route
+from ..services.auth_service import AuthService
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -86,5 +86,9 @@ def change_password():
 def refresh():
     '''Endpoint to refresh access token'''
     current_user = get_jwt_identity()
-    response, status = AuthService.refresh_token(current_user)
+    jti = get_jwt()['jti']
+    # Extract the token from the header
+    refresh_token = request.headers.get('Authorization').split()[1]
+    user_info = {'sub': current_user, 'jti': jti, 'token': refresh_token}
+    response, status = AuthService.refresh_token(user_info)
     return response, status

@@ -1,13 +1,16 @@
 '''AuthService with business logic for the auth routes'''
-from datetime import timedelta
-from flask_jwt_extended import create_access_token, create_refresh_token
-from ..models.models import User
+from datetime import timedelta, datetime, timezone
+from flask_jwt_extended import create_access_token, create_refresh_token, decode_token
+from auth import db
 from auth.utils.validation import validate_email, validate_password, validate_username
+from auth.utils.logger import log_success
+from ..models.models import User, RefreshToken
 
 PASSWORD_VALIDATION_ERROR = 'Password must be at least 8 char, at least one letter and one number'
 
 class AuthService:
     '''Contains the business logic for the auth routes'''
+
     @staticmethod
     def register_user(username, email, password):
         '''Registers a new user'''
@@ -30,7 +33,6 @@ class AuthService:
                 'message': 'Username can only contain alphanumeric characters and underscores'
                 }, 400
 
-        # hashed_password = generate_password_hash(password)
         new_user = User(username=username, email=email)
         new_user.set_password(password)
 
@@ -45,8 +47,11 @@ class AuthService:
         if not user or not user.check_password(password):
             return {'message': 'Invalid credentials'}, 401
 
-        access_token = create_access_token(identity=user.id, expires_delta=timedelta(minutes=10), fresh=True)
-        refresh_token = create_refresh_token(identity=user.id, expires_delta=timedelta(minutes=60))
+        access_token = AuthService._create_access_token(user.id)
+        refresh_token = AuthService._create_refresh_token(user.id)
+
+        # Store the new refresh token in the database
+        AuthService._store_refresh_token(refresh_token)
 
         return {
             'access_token': access_token,
@@ -79,10 +84,77 @@ class AuthService:
         return {'message': 'Password updated successfully'}, 200
 
     @staticmethod
-    def refresh_token(current_user):
-        '''Refreshes the access token'''
-        access_token = create_access_token(
-            identity=current_user,
-            expires_delta=timedelta(minutes=15)
+    def refresh_token(user_info):
+        '''Refreshes the access token and issues a new refresh token'''
+        # Invalidate the old refresh token
+        old_token = RefreshToken.query.filter_by(
+            token=user_info['token'],
+            user_id=user_info['sub']
+            ).first()
+        if old_token:
+            if old_token.used:
+                return {'message': 'Invalid token'}, 401
+            old_token.used = True
+            db.session.commit()
+        else:
+            return {'message': 'Token not found'}, 401
+
+        # Create new access and refresh tokens
+        new_access_token = AuthService._create_access_token(user_info['sub'])
+        new_refresh_token = AuthService._create_refresh_token(user_info['sub'])
+
+
+        # Store the new refresh token in the database
+        AuthService._store_refresh_token(new_refresh_token)
+
+        return {
+            'access_token': new_access_token,
+            'refresh_token': new_refresh_token,
+            'message': 'Tokens refreshed successfully'
+        }, 200
+
+    # Private Helper Methods
+    @staticmethod
+    def _create_access_token(user_id):
+        '''Creates an access token'''
+        return create_access_token(identity=user_id, expires_delta=timedelta(minutes=15))
+
+    @staticmethod
+    def _create_refresh_token(user_id):
+        '''Creates a refresh token'''
+        return create_refresh_token(identity=user_id, expires_delta=timedelta(minutes=60))
+
+    @staticmethod
+    def _store_refresh_token(refresh_token):
+        '''Stores the new refresh token in the database'''
+        # Decode the new refresh token to get the expiry date
+        decoded_refresh_token = decode_token(refresh_token)
+        expires_at = datetime.fromtimestamp(decoded_refresh_token['exp'], tz=timezone.utc)
+        user_id = decoded_refresh_token['sub']
+
+        # Store the new refresh token in the database
+        new_token = RefreshToken(
+            token=refresh_token,
+            user_id=user_id,
+            used=False,
+            expires_at=expires_at
             )
-        return {'access_token': access_token, 'message': 'Token refreshed Successfully'}, 200
+        new_token.insert()
+
+        # Delete all expired refresh tokens of a user
+        AuthService.delete_expired_refresh_tokens(user_id)
+
+    @staticmethod
+    def delete_expired_refresh_tokens(user_id):
+        '''Deletes expired refresh tokens of a user'''
+        now = datetime.now(timezone.utc)
+        expired_tokens = RefreshToken.query.filter(
+            RefreshToken.user_id == user_id,
+            RefreshToken.expires_at < now
+            ).all()
+        for token in expired_tokens:
+            db.session.delete(token)
+            log_success(
+                'delete_expired_refresh_tokens()', 
+                f"{token.token} belonging to {user_id} has expired and deleted successfully")
+        db.session.commit()
