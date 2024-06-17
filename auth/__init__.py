@@ -1,6 +1,6 @@
 ''' To initialize auth app'''
 import os
-from flask import Flask, request
+from flask import Flask, request, jsonify, Response
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_bcrypt import Bcrypt
@@ -142,4 +142,16 @@ def create_app():
             from auth.utils.logger import log_error # pylint: disable=import-outside-toplevel
             log_error("create_app()", f"An error occurred: {e}")
 
+    # General route to get logs
+    @app.route('/logs', methods=['GET'])
+    def get_logs():
+        """Endpoint to retrieve logs"""
+        log_file_path = 'logs/app.log'
+        try:
+            with open(log_file_path, 'r') as file:
+                log_content = file.read()
+            return Response(log_content, mimetype='text/plain')
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+        
     return app
