@@ -1,6 +1,7 @@
 '''Contains the route and its business logic call to authservice'''
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
+from flasgger import swag_from
 from auth.utils.logger import log_route
 from ..services.auth_service import AuthService
 
@@ -10,15 +11,56 @@ auth_bp = Blueprint('auth', __name__)
 @auth_bp.route('/test', methods=['GET'])
 @log_route
 def test():
-    '''A test route'''
+    """
+    A test route
+    ---
+    responses:
+      200:
+        description: Test endpoint successful
+        examples:
+          application/json:
+            message: Test endpoint
+    """
     return {'message': 'Test endpoint'}, 200
 
 
-# Endpoint to register a user
 @auth_bp.route('/register', methods=['POST'])
 @log_route
 def register():
-    '''Endpoint to register a user'''
+    """
+    Endpoint to register a user
+    ---
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            username:
+              type: string
+            email:
+              type: string
+            password:
+              type: string
+          required:
+            - username
+            - email
+            - password
+    tags:
+      - auth
+    responses:
+      201:
+        description: User registered successfully
+        examples:
+          application/json:
+            message: User registered successfully
+      400:
+        description: Missing required fields or validation errors
+        examples:
+          application/json:
+            message: Email already exists
+    """
     data = request.get_json()
 
     if not data or not data.get('username') or not data.get('email') or not data.get('password'):
@@ -34,7 +76,44 @@ def register():
 @auth_bp.route('/login', methods=['POST'])
 @log_route
 def login():
-    '''Endpoint to login a user'''
+    """
+    Endpoint to login a user
+    ---
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            email:
+              type: string
+            password:
+              type: string
+          required:
+            - email
+            - password
+    tags:
+      - auth
+    responses:
+      200:
+        description: User logged in successfully
+        examples:
+          application/json:
+            access_token: string
+            refresh_token: string
+            message: User logged in successfully
+      400:
+        description: Missing required fields
+        examples:
+          application/json:
+            message: Missing required fields
+      401:
+        description: Invalid credentials
+        examples:
+          application/json:
+            message: Invalid credentials
+    """
     data = request.get_json()
 
     if not data or not data.get('email') or not data.get('password'):
@@ -50,7 +129,36 @@ def login():
 @jwt_required()
 @log_route
 def reset_password():
-    '''Endpoint to reset password'''
+    """
+    Endpoint to reset password
+    ---
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            new_password:
+              type: string
+          required:
+            - new_password
+    security:
+      - Bearer: []
+    tags:
+      - auth
+    responses:
+      200:
+        description: Password updated successfully
+        examples:
+          application/json:
+            message: Password updated successfully
+      400:
+        description: Missing required fields or validation errors
+        examples:
+          application/json:
+            message: Missing required fields
+    """
     user_id = get_jwt_identity()
     data = request.get_json()
 
@@ -67,7 +175,44 @@ def reset_password():
 @jwt_required()
 @log_route
 def change_password():
-    '''Endpoint to change password'''
+    """
+    Endpoint to change password
+    ---
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            current_password:
+              type: string
+            new_password:
+              type: string
+          required:
+            - current_password
+            - new_password
+    security:
+      - Bearer: []
+    tags:
+      - auth
+    responses:
+      200:
+        description: Password updated successfully
+        examples:
+          application/json:
+            message: Password updated successfully
+      400:
+        description: Missing required fields or validation errors
+        examples:
+          application/json:
+            message: Missing required fields
+      401:
+        description: Invalid current password
+        examples:
+          application/json:
+            message: Invalid current password
+    """
     user_id = get_jwt_identity()
     data = request.get_json()
 
@@ -84,7 +229,27 @@ def change_password():
 @jwt_required(refresh=True)
 @log_route
 def refresh():
-    '''Endpoint to refresh access token'''
+    """
+    Endpoint to refresh access token
+    ---
+    security:
+      - Bearer: []
+    tags:
+      - auth
+    responses:
+      200:
+        description: Tokens refreshed successfully
+        examples:
+          application/json:
+            access_token: string
+            refresh_token: string
+            message: Tokens refreshed successfully
+      401:
+        description: Invalid token
+        examples:
+          application/json:
+            message: Invalid token
+    """
     current_user = get_jwt_identity()
     jti = get_jwt()['jti']
     # Extract the token from the header
