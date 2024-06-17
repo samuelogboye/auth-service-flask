@@ -148,10 +148,10 @@ def create_app():
         """Endpoint to retrieve logs"""
         log_file_path = 'logs/app.log'
         try:
-            with open(log_file_path, 'r') as file:
+            with open(log_file_path, 'r', encoding='utf-8') as file:
                 log_content = file.read()
             return Response(log_content, mimetype='text/plain')
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             return jsonify({"error": str(e)}), 500
-        
+
     return app
